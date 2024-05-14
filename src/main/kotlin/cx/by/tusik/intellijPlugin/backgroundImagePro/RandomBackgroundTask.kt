@@ -9,9 +9,28 @@ import java.io.File
 class RandomBackgroundTask : Runnable {
 
     private val imagesHandler: ImagesHandler = ImagesHandler()
+    fun clearCache(){
+        val prop = PropertiesComponent.getInstance()
+        val cacheFolder = prop.getValue(Settings.CACHE_FOLDER, "")
+        val file = File(cacheFolder)
+        if (!file.exists()) {
+            NotificationCenter.notice("Cache folder not set")
+            return
+        }
+        // 删除缓存文件夹下的所有图片
+        imagesHandler.clearCache(cacheFolder)
 
+
+    }
     override fun run() {
         val prop = PropertiesComponent.getInstance()
+
+        val lastClearCacheTime = prop.getValue(Settings.CACHE_CLEAR_DATE, "0").toLong()
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastClearCacheTime > 24 * 60 * 60 * 1000) {
+            clearCache()
+            prop.setValue(Settings.CACHE_CLEAR_DATE, currentTime.toString())
+        }
 
         val folder = prop.getValue(Settings.FOLDER, "")
         val imageSource = prop.getValue(Settings.IMAGE_SOURCE, "internet")

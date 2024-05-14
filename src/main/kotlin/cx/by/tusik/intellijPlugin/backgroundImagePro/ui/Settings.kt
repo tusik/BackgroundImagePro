@@ -31,8 +31,8 @@ class Settings : Configurable {
     private var imageUrl: JTextField? = null
     private var localRadio: JRadioButton? = null
     private var internetRadio: JRadioButton? = null
-    private var defaultUrl = "https://pic.re/images"
-    private var defaultCacheFolder = Paths.get(System.getProperty("user.home"), "MyPluginImages").toString()
+    private var defaultUrl = "https://pic.re/images?compress=false&max_size=4096"
+    private var defaultCacheFolder = Paths.get(System.getProperty("user.home"), "backgroundImages").toString()
     private var cacheLabel: JLabel? = null
     private var cacheFolder: TextFieldWithBrowseButton? = null
     override fun getDisplayName(): @Nls String? {
@@ -101,7 +101,7 @@ class Settings : Configurable {
             }else{
             }
         }
-        imageFolder!!.text = prop.getValue(FOLDER, defaultUrl)
+        imageFolder!!.text = prop.getValue(FOLDER, defaultCacheFolder)
         imageUrl!!.text = prop.getValue(IMAGE_URL, defaultUrl)
         cacheFolder!!.text = prop.getValue(CACHE_FOLDER, defaultCacheFolder)
         intervalSpinner!!.value = prop.getInt(INTERVAL, 0)
@@ -123,6 +123,9 @@ class Settings : Configurable {
         return (storedFolder != uiFolder
                 || opacityModified(prop)
                 || intervalModified(prop)
+                || imageUrlModified(prop)
+                || imageSourceModified(prop)
+                || cacheFolderModified(prop)
                 || prop.getBoolean(AUTO_CHANGE) != autoChangeCheckBox!!.isSelected)
     }
 
@@ -136,6 +139,24 @@ class Settings : Configurable {
         val opacity = (opacitySpinner!!.model as SpinnerNumberModel).number.toInt()
         val storedOpacity = prop.getInt(OPACITY, 15)
         return storedOpacity != opacity
+    }
+
+    private fun cacheFolderModified(prop: PropertiesComponent): Boolean {
+        val storedCacheFolder = prop.getValue(CACHE_FOLDER)
+        val uiCacheFolder = cacheFolder!!.text
+        return storedCacheFolder != uiCacheFolder
+    }
+
+    private fun imageUrlModified(prop: PropertiesComponent): Boolean {
+        val storedImageUrl = prop.getValue(IMAGE_URL)
+        val uiImageUrl = imageUrl!!.text
+        return storedImageUrl != uiImageUrl
+    }
+
+    private fun imageSourceModified(prop: PropertiesComponent): Boolean {
+        val storedImageSource = prop.getValue(IMAGE_SOURCE)
+        val uiImageSource = if (localRadio!!.isSelected) "local" else "internet"
+        return storedImageSource != uiImageSource
     }
 
     @Throws(ConfigurationException::class)
@@ -162,7 +183,7 @@ class Settings : Configurable {
 
     override fun reset() {
         val prop = PropertiesComponent.getInstance()
-        imageFolder!!.text = prop.getValue(FOLDER, defaultUrl)
+        imageFolder!!.text = prop.getValue(FOLDER, defaultCacheFolder)
         intervalSpinner!!.value =
             prop.getInt(INTERVAL, 0)
         autoChangeCheckBox!!.isSelected =
@@ -187,5 +208,6 @@ class Settings : Configurable {
         const val OPACITY = "BackgroundImagesOpacity"
         const val IMAGE_SOURCE = "BackgroundImagesSource"
         const val CACHE_FOLDER = "BackgroundImagesCacheFolder"
+        const val CACHE_CLEAR_DATE = "BackgroundImagesCacheClearDate"
     }
 }

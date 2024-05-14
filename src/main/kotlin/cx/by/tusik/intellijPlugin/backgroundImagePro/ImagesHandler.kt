@@ -1,6 +1,7 @@
 package cx.by.tusik.intellijPlugin.backgroundImagePro
 
 import java.io.File
+import java.net.HttpURLConnection
 import java.util.*
 import java.net.URL
 import java.nio.file.Files
@@ -15,18 +16,46 @@ import java.time.Instant
 internal class ImagesHandler {
     fun downloadImage(imageUrl: String, targetPath: String): String? {
         try {
-            val url = URL(imageUrl)
-            val bytes = url.readBytes()
+            val initialUrl = URL(imageUrl)
+            val connection = initialUrl.openConnection() as HttpURLConnection
+            connection.instanceFollowRedirects = false
+            connection.connect()
+
+            var urlToDownload: URL = initialUrl
+            val responseCode = connection.responseCode
+            if (responseCode == HttpURLConnection.HTTP_MOVED_PERM || responseCode == HttpURLConnection.HTTP_MOVED_TEMP) {
+                val redirectedUrl = connection.getHeaderField("Location")
+                urlToDownload = URL(redirectedUrl)
+            }
+
+            val bytes = urlToDownload.readBytes()
+            val fileName = urlToDownload.path.split("/").last()
             val timestamp = Instant.now().toEpochMilli()
-            val realPath = Paths.get(targetPath, "$timestamp.jpg")
+            val realPath = Paths.get(targetPath, fileName)
             Files.write(realPath, bytes)
-            // 打印下载的图片路径
             println("Downloaded image to: $realPath")
             return realPath.toString()
         } catch (e: Exception) {
             e.printStackTrace()
         }
         return null
+    }
+    fun clearCache(cacheFolder: String){
+        val dir = Paths.get(cacheFolder)
+        if (!Files.exists(dir)) {
+            return
+        }
+        val list = dir.toFile().listFiles() ?: return
+        for (f in list) {
+            if (f.isDirectory) {
+                clearCache(f.absolutePath)
+            } else {
+                if(f.extension == "jpg" || f.extension == "png" || f.extension == "jpeg"){
+                    f.delete()
+                }
+
+            }
+        }
     }
     /**
      * @param folder folder to search for images

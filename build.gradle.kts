@@ -7,7 +7,7 @@ plugins {
 apply(plugin = "org.jetbrains.intellij")
 apply(plugin = "org.jetbrains.kotlin.jvm")
 group = "cx.by"
-version = "0.0.1"
+version = "0.0.4"
 dependencies{
     compileOnly("org.jetbrains.kotlin:kotlin-stdlib")
     compileOnly("org.jetbrains.kotlin:kotlin-stdlib-common")
